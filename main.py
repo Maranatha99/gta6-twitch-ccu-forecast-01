@@ -8,7 +8,7 @@ Method (fitted from the case's own comparables at run time, nothing hard-coded
 except the four tuning constants below):
 
   1. Per hour h, an OLS fit of log(viewers_h) on log(hour-1 print) over all
-     comparable launches. The slope is floored at 0.5: the raw fit's evening
+     comparable launches. The slope is floored at 0.4: the raw fit's evening
      slope collapses toward 0 because a few comparables had a near-dead
      hour 1 (a single global unlock late in the day), which would absurdly
      predict an evening audience independent of launch size. The floor keeps
@@ -16,9 +16,9 @@ except the four tuning constants below):
   2. A k-nearest-neighbours curve: the 15 comparables whose hour-1 print is
      closest in log space; the median of their log-ratios log(v_h / v_1) is
      the local median curve, and their empirical quantiles give the spread.
-  3. The median is a 60/40 blend (in log space) of the OLS prediction and the
+  3. The median is a 70/30 blend (in log space) of the OLS prediction and the
      kNN median; the quantiles are the kNN empirical quantiles re-centred on
-     that blended median and shrunk by 0.7 (the raw neighbour spread includes
+     that blended median and shrunk by 0.6 (the raw neighbour spread includes
      between-game heterogeneity that overstates the conditional spread).
 
 If too few comparables are usable, the program falls back to the house
@@ -47,10 +47,17 @@ Z = [-1.645, -0.674, 0, 0.674, 1.645]
 SIGMA_BASELINE = 0.15  # persistence fallback spread, as in the starter
 
 # Tuning constants (chosen on the four practice cases; see README).
-W_OLS = 0.6        # weight of the OLS median in the log-space blend
+# Retuned 2026-11-17 after a 3x3x3x3 grid search (81 combos) over the same
+# four cases: mean log-scale pinball 0.1685 -> 0.1609. The grid's signal was
+# consistent, not a single outlier: a higher OLS weight, a smaller shrink,
+# and a lower slope floor each helped on their own (0.1665 / 0.1665 /
+# 0.1683), and together they gave the best combo. Per case: p00 0.195 ->
+# 0.166, p01 0.165 -> 0.173 (slightly worse), p02 0.106 -> 0.106, p03
+# 0.208 -> 0.199. k=15 stayed best; k=12/k=20 were both worse alone.
+W_OLS = 0.7        # weight of the OLS median in the log-space blend
 KNN_K = 15         # neighbours in log hour-1 print
-SHRINK = 0.7       # shrink of the neighbours' empirical spread
-SLOPE_FLOOR = 0.5  # minimum elasticity of an hour's viewers to hour 1
+SHRINK = 0.6       # shrink of the neighbours' empirical spread
+SLOPE_FLOOR = 0.4  # minimum elasticity of an hour's viewers to hour 1
 MIN_CURVES = 5     # fewer usable comparables -> persistence fallback
 
 
